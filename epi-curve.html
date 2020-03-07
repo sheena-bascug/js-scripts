@@ -1,0 +1,52 @@
+<style>
+</style>
+
+<script
+    src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+    crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+
+    var isHealthy = true;
+    var features = [];
+    
+    var settings = {
+    "url": "https://services.arcgis.com/5T5nSi527N4F7luB/ArcGIS/rest/services/Historic_adm0_v3/FeatureServer/0/query",
+    "method": "POST",
+    "timeout": 0,
+    "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+    },
+    "data": {
+        "f": "json",
+        "where": "1=1",
+        "outFields": "OBJECTID, DateOfDataEntry, NewCase, ADM0_VIZ_NAME",
+        "returnGeometry": "false",
+        "spatialRel": "esriSpatialRelIntersects",
+        "orderByFields": "DateOfDataEntry asc",
+        "resultOffset": "0",
+        "resultRecordCount": "5000",
+        "cacheHint": "true"
+    }
+    };
+
+
+    $.ajax(settings).done(function (response) {
+        var result = JSON.parse(response);
+        // console.log(result); 
+
+        // result.features.forEach(entry => {
+        //     var entryDate = entry.attributes.DateOfDataEntry;
+        //     entry.attributes.EntryDate = new Date(entryDate);
+        //     // console.log(entryDate);
+        // });
+        // console.log(result.features); 
+
+    });
+
+    // groupby: https://stackoverflow.com/questions/14446511/most-efficient-method-to-groupby-on-an-array-of-objects
+    // ms to date: https://stackoverflow.com/questions/4673527/converting-milliseconds-to-a-date-jquery-javascript
+    // agol health check: https://developers.arcgis.com/rest/services-reference/health-check.htm
+
+</script>
