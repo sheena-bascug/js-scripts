@@ -1,5 +1,5 @@
 
-<!-- copy the lines below in the SharePoint script editor and reference this document. 
+/* copy lines below to a SharePoint script editor
 
 <h2>Epidemiological curves</h2>
 <p>Data from <a href="https://experience.arcgis.com/experience/685d0ace521648f8a5beeeee1b9125cd" target="_blank">WHO:  Novel Coronavirus (COVID-19) Situation Dashboard</a>.</p>
@@ -11,7 +11,7 @@
 
 <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script> <!-- DON'T COPY if SharePoint 2016 -->
 
--->
+*/
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
 
 <script type="text/javascript">  
