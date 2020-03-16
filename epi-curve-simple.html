@@ -12,10 +12,8 @@
 
 <body>
 
-    <canvas id="wordwide" width="400" height="400"></canvas>
-
-
-
+    <canvas id="wordwide" width="400" height="300"></canvas>
+    <canvas id="canada" width="400" height="300"></canvas>
 
 <script
     src="https://code.jquery.com/jquery-3.4.1.min.js"
@@ -26,8 +24,10 @@
 
 <script type="text/javascript">  
 
-    var outData = [];
-    var worldwideSettings = {
+    var worldData = [];
+    var canadaData = [];
+
+    var worldSettings = {
         "async": false,
         "url": "https://services.arcgis.com/5T5nSi527N4F7luB/ArcGIS/rest/services/Historic_adm0_v3/FeatureServer/0/query",
         "method": "POST",
@@ -48,49 +48,92 @@
         },
         success: function(response) {
             var result = JSON.parse(response);
-            var entries = [];
-            
-            result.features.forEach(function (entry) {
-                var entryDate = new Date(entry.attributes.DateOfDataEntry).toLocaleDateString('en-CA');
-                var entryNewCaseTotal = entry.attributes.DailyNewCases;
-                
-                entries.push({ "DateOfDataEntry" : entryDate, "DailyNewCaseTotal": entryNewCaseTotal});
+            var entries = result.features.map(function (entry) {
+                return {
+                    "DateOfDataEntry" : new Date(entry.attributes.DateOfDataEntry).toLocaleDateString('en-CA'),
+                    "DailyNewCase": entry.attributes.DailyNewCases                    
+                };
             });
-
             
-            outData = entries.slice();
-            // outData.Labels = DateLabels;
-            // outData.Cases = CaseData;
-
-
-            // return { Labels : DateLabels, NewCases : CaseData };
+            worldData = entries.slice();
         }
     };
 
-    $.ajax(worldwideSettings);
+    var canadaSettings = {
+        "async": false,
+        "url": "https://services.arcgis.com/5T5nSi527N4F7luB/ArcGIS/rest/services/Historic_adm0_v3/FeatureServer/0/query",
+        "method": "POST",
+        "timeout": 0,
+        "headers": {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "data": {
+            "f": "json",
+            "where": "ADM0_VIZ_NAME = 'CANADA'",
+            "outFields": "OBJECTID, DateOfDataEntry, cum_conf, NewCase, ADM0_VIZ_NAME",
+            "returnGeometry": "false",
+            "spatialRel": "esriSpatialRelIntersects",
+            "orderByFields": "DateOfDataEntry asc",
+            "resultOffset": "0",
+            "cacheHint": "true"
+        }, success: function(response) {
+            var result = JSON.parse(response);
+            var entries = result.features.map(function (entry) { 
+                return {
+                    "DateOfDataEntry" : new Date(entry.attributes.DateOfDataEntry).toLocaleDateString('en-CA'),
+                    "DailyNewCase": entry.attributes.NewCase
+                }; 
+            })
+          
+            canadaData = entries.slice();
+
+        }
+    };
 
     $(document).ready( function() {
-        var DateLabels = outData.map( function (entry) { return entry.DateOfDataEntry; });
-        var CaseData = outData.map( function (entry) { return entry.DailyNewCaseTotal; });
+        $.ajax(worldSettings);
+        $.ajax(canadaSettings);
 
+        var canadaOffsetDates = ["2020-01-21", "2020-01-22", "2020-01-23", "2020-01-24", "2020-01-25"];
+        var canadaOffsetCases = [0, 0, 0, 0, 0];
+
+        var worldDateLabel = worldData.map( function (entry) { return entry.DateOfDataEntry; });
+        var worldCaseData = worldData.map( function (entry) { return entry.DailyNewCase; });
+        var canadaDateLabels = canadaOffsetDates.concat(canadaData.map( function (entry) { return entry.DateOfDataEntry; }));
+        var canadaCaseDate = canadaOffsetCases.concat(canadaData.map( function(entry) { return entry.DailyNewCase; }));
         
-        var ctx = document.getElementById('wordwide').getContext('2d');
-            
-            var myChart  = new Chart (ctx, {
-                type: 'bar',
-                data: {
-                    labels: DateLabels,
-                    datasets: [{
-                        data: CaseData,
-                        // backgroundColor: fillPattern
-                    }]
-                }
-            });
+        var globalChart = document.getElementById('wordwide').getContext('2d');
+        var canadaChart = document.getElementById('canada').getContext('2d');    
+        
+        var myChart  = new Chart (globalChart, {
+            type: 'bar',
+            data: {
+                labels: worldDateLabel,
+                datasets: [
+                    {
+                        label: "Global Daily New Cases",
+                        data: worldCaseData,
+                        backgroundColor: "#ff9f1c"
+                    }, 
+                ]
+            }
+        });
+           
+        var myChart  = new Chart (canadaChart, {
+            type: 'bar',
+            data: {
+                labels: canadaDateLabels,
+                datasets: [
+                    {
+                        label: "Canada Daily New Cases",
+                        data: canadaCaseDate,
+                        backgroundColor: "#ff0000"
+                    },
+                ]
+            }
+        });
     });
 
-    console.log("-----------------------");
-
-    console.log(outData);
 
 </script>
 

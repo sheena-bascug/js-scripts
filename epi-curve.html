@@ -1,10 +1,10 @@
-<style>
-</style>
+<canvas id="wordwide" width="400" height="400"></canvas>
 
 <script
     src="https://code.jquery.com/jquery-3.4.1.min.js"
     integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
     crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
 
 <script type="text/javascript">
 
@@ -43,8 +43,9 @@
         continent: "Other",
         countries:  []
     }];
+
     var isHealthy = true;
-    var features = [];
+    var entries = {};
 
     var settings = {
         "async": false,
@@ -65,21 +66,19 @@
         "cacheHint": "true"
         },
         success: function (response) {
-            var result = JSON.parse(response);
-            var entries = {};
-
+            var result = JSON.parse(response);  // note: max record count is 2000 
             
             result.features.forEach(function(entry) {
                 var current = entry.attributes;
+                var currentContinent;
                 
-                // convert date to string
+                // convert date to readable string
                 var currentDate =  new Date(current.DateOfDataEntry).toLocaleDateString('en-CA');
                 
+                // initialize date key if it doesn't exist
                 if(!entries.hasOwnProperty(currentDate)) {
                     entries[currentDate] = {"Africa": 0, "Asia": 0, "Americas": 0, "Canada": 0, "China": 0, "Europe": 0, "Oceania": 0, "Other": 0};                    
                 } 
-
-                var currentContinent = "";
 
                 if(null != current.ADM0_VIZ_NAME && (current.ADM0_VIZ_NAME === "China" || current.ADM0_VIZ_NAME === "Canada")) {
                     currentContinent = current.ADM0_VIZ_NAME;
@@ -89,31 +88,95 @@
                     var found = continents.find(function ( {countries} ){ return countries.includes(current.ADM0_VIZ_NAME)});
                    
                     if(found == undefined) {
+                        // TODO: error handling > missing continent for country
                         console.log("Error: Continent not found for " +  current.ADM0_VIZ_NAME);
                     }
                     else {
                         currentContinent = found.continent;
                     }
                 } else {
+                    // blank country name e.g., cruise ships, etc. 
                      currentContinent = "Other";
-                     console.log(current.ADM0_NAME);
+                    //  console.log(current.ADM0_NAME); 
                 }
 
-                if(entries[currentDate].hasOwnProperty(currentContinent)) {
-                    var sum = entries[currentDate][currentContinent] + current.NewCase;                    
-                    entries[currentDate][currentContinent] = sum;
-                    
+                // increment continent's total
+                if(entries[currentDate].hasOwnProperty(currentContinent)) {                 
+                    entries[currentDate][currentContinent] += current.NewCase;                    
                 }                
                 
             });
-            console.log(entries);
+
         }
     };
 
 
     $.ajax(settings);
 
-    
+    console.log(entries);
+
+    chartSetup();
+
+    function chartSetup() {
+
+        var dateLabels = Object.keys(entries).reverse();
+        var caseByContinent = Object.values(entries);
+
+        var caseCanada = caseByContinent.map( function(e) { return e.Canada });
+        var caseChina = caseByContinent.map( function(e) { return e.China });
+
+        var caseAfrica = caseByContinent.map( function(e) { return e.Africa }).reverse();
+        var caseAmerica = caseByContinent.map( function(e, i) { return e.Americas + caseCanada[i] }).reverse();
+        var caseAsia = caseByContinent.map( function(e, i) { return e.Asia + caseChina[i] }).reverse();
+        var caseEurope = caseByContinent.map( function(e) { return e.Europe }).reverse();
+        var caseOceania = caseByContinent.map( function(e) { return e.Oceania }).reverse();
+        var caseOther = caseByContinent.map( function(e) { return e.Other }).reverse();
+
+        // console.log(caseAmerica);
+        var ctx = document.getElementById('wordwide').getContext('2d');
+        var myChart  = new Chart (ctx, {
+            type: 'bar',
+            data: {
+                labels: dateLabels,
+                datasets: [{
+                    label: "Americas",
+                    data: caseAmerica,
+                    backgroundColor: "#2aa5da"
+                }, {
+                    label: "Asia",
+                    data: caseAsia,
+                    backgroundColor: "#ff9f1c"
+                }, {
+                    label: "Europe",
+                    data: caseEurope,
+                    backgroundColor: "#bfbfbf"
+                }, {
+                    label: "Oceania",
+                    data: caseOceania,
+                    backgroundColor: "#efff1c"
+                }, {
+                    label: "Other",
+                    data: caseOther,
+                    backgroundColor: "#8076cc"
+                }, {
+                    label: "Africa",
+                    data: caseAfrica,
+                    backgroundColor: "#4aba00"
+                }]
+            }, options: {
+                scales: {
+                    xAxes: [{ stacked: true }],
+                    yAxes: [{ stacked: true }]
+                }
+            }
+        });
+        
+        // console.log(caseCanada.reverse());
+
+        // var CaseData = outData.map( function (entry) { return entries.DailyNewCaseTotal; });
+
+    }
+
     // agol health check: https://developers.arcgis.com/rest/services-reference/health-check.htm
 
 </script>
